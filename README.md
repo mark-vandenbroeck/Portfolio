@@ -4,12 +4,15 @@ Een gebruiksvriendelijke, lokaal gehoste webapplicatie gebouwd met **Flask** voo
 
 ## 🚀 Kenmerken
 
-- **Meerdere portefeuilles beheren:** Maak verschillende portefeuilles aan (bijv. "Lange termijn", "Pensioen", "Opties").
-- **Transactie-ondersteuning:** Registreer stortingen (`CASH_IN`), opnames (`CASH_OUT`), aankopen (`BUY`) en verkopen (`SELL`).
+- **Meerdere portefeuilles beheren:** Maak verschillende portefeuilles aan (bijv. "Lange termijn", "Pensioen", "Opties") en verwijder ze indien nodig inclusief historie.
+- **Transactie-ondersteuning:** Registreer stortingen (`CASH_IN`), opnames (`CASH_OUT`), aankopen (`BUY`) en verkopen (`SELL`). 
+- **Cash Protectie:** Geavanceerde transactiecontroles voorkomen dat je cashbalans onder nul duikt bij aankopen of opnames.
+- **Historische Grafieken:** Ingebouwde integratie met `Chart.js` via een interactieve modal om 1-jaars koersgrafieken direct op te roepen.
+- **Globale Zoekfunctie:** Gebruik de snelle zoekbalk bovenaan elke pagina om direct de koers, dag-randen en 52-weken range van willekeurige tickers te bekijken zonder ze toe te voegen aan een portefeuille.
 - **Live koersdata:** Integreert met de `yfinance` bibliotheek om actuele aandelenkoersen en bedrijfsinformatie op te halen.
 - **Automatische wisselkoersen:** Alle investeringen (in USD, GBP, etc.) worden automatisch teruggerekend naar Euro (EUR) op basis van de meest recente wisselkoersen. Deze rates worden per dag lokaal gecached.
 - **Stock Splits:** De applicatie detecteert automatisch stock splits via Yahoo Finance en verwerkt deze historisch met terugwerkende kracht in jouw portfolio om de positieaantallen kloppend te houden.
-- **Winst- & Verliesberekening (P&L):** Berekening van de gemiddelde aankoopprijs, ongerealiseerde koerswinsten (in percentages en Euro's), en weergave van de netto en bruto resultaten.
+- **Winst- & Verliesberekening (P&L):** Berekening van de gemiddelde aankoopprijs, actuele posities en gecombineerde totaalwaardes van de portefeuille, inclusief rendement en valutaimpact.
 - **Brokerkosten:** Houd de gemaakte brokerkosten bij per transactie voor een nauwkeuriger beeld van het werkelijke rendement.
 
 ## 🛠️ Technologie Stack
@@ -63,7 +66,7 @@ http://127.0.0.1:5000
 
 ## 📊 Hoe werkt de portefeuille logica?
 
-- **Cash Balans:** Alle `CASH_IN` events worden bij elkaar opgeteld en `CASH_OUT` worden er van af getrokken. Als je niet vooraf voldoende CASH invoert voordat je aankopen doet, wordt het niet direct van een saldo afgetrokken om de weergave niet te blokkeren, maar het actuele tegoed in je portfolio kan incorrect overkomen als het handmatig in balans wordt gehouden.
+- **Cash Balans:** Alle `CASH_IN` events worden bij elkaar opgeteld en kosten voor aankopen (`BUY`) plus opnames (`CASH_OUT`) worden daarvan afgetrokken. Verkopen voegen netto cash toe. Verkeerde invoer waarbij je méér uitgeeft dan je bezit, wordt automatisch geblokkeerd!
 - **Chronologische Volgorde:** Wanneer je een specifieke portefeuille bekijkt, dan worden alle transacties plus historisch relevante stock-splits in chronologische volgorde herleid om je positie exact op te bouwen. 
 - **Profit berekening:** Het winstpercentage houdt rekening met verkochte elementen (via de rato van het aandelenvolume), koersschommelingen ten opzichte van aankoop in de vreemde valuta en de impact van berekende brokerkosten in euro's.
 
