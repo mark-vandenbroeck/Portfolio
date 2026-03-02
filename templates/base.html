@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Manager</title>
+    <!-- Modern Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">🚀 PortfolioBeheer</a>
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">Mijn Portefeuilles</a>
+                <a href="{{ url_for('exchange_rates') }}" style="margin-left: 1rem;">Wisselkoersen</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Generic Modal for Ticker Info -->
+    <div id="tickerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn"
+                onclick="document.getElementById('tickerModal').style.display='none';">&times;</span>
+            <div id="modal-body">
+                <h2 id="modal-title">Laden...</h2>
+                <div class="spinner" id="modal-spinner"></div>
+                <div id="modal-data" style="display: none;">
+                    <p class="modal-summary" id="modal-summary"></p>
+                    <div class="modal-grid">
+                        <div class="modal-item">
+                            <span class="modal-label">Sector</span>
+                            <span class="modal-value" id="modal-sector"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Industrie</span>
+                            <span class="modal-value" id="modal-industry"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Land</span>
+                            <span class="modal-value" id="modal-country"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Valuta</span>
+                            <span class="modal-value" id="modal-currency"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 PortfolioBeheer App. Gemaakt met Flask, yfinance en SQLite.</p>
+    </footer>
+
+    <!-- Scripts for modals/dynamic ui if needed later -->
+</body>
+
+</html>

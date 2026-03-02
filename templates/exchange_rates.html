@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Historische Wisselkoersen</h1>
+    <p>Overzicht van gecachte wisselkoersen (EUR basis).</p>
+</div>
+
+<div class="card table-responsive mt-2">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Munt</th>
+                <th class="text-right">Koers t.o.v EUR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rate in rates %}
+            <tr>
+                <td>{{ rate.date }}</td>
+                <td><strong>{{ rate.currency }}</strong></td>
+                <td class="text-right">{{ "%.4f"|format(rate.rate_to_eur) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="text-center empty-state">Geen wisselkoersen geregistreerd.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

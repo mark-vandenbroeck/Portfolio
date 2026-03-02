@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-section flex-between">
+    <div>
+        <h1>{{ portfolio.name }}</h1>
+        <p>Overzicht van huidige posities en transacties.</p>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('history', id=portfolio.id) }}" class="btn btn-secondary">Bekijk Historiek</a>
+    </div>
+</div>
+
+<div class="summary-cards">
+    <div class="stat-card">
+        <h3>Cash (EUR)</h3>
+        <p class="stat-value">€ {{ "%.2f"|format(cash_eur) }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Totale Waarde (EUR)</h3>
+        <p class="stat-value highlight">€ {{ "%.2f"|format(total_value) }}</p>
+    </div>
+</div>
+
+<div class="card mt-2">
+    <div class="flex-between">
+        <h2>Huidige Posities</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Naam</th>
+                    <th class="text-right">Aantal</th>
+                    <th class="text-right">Gekocht @</th>
+                    <th class="text-right">Koers Nu</th>
+                    <th>Munt</th>
+                    <th class="text-right">Nettowaarde (EUR)</th>
+                    <th class="text-right">Winst/Verlies</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in holdings %}
+                <tr>
+                    <td>
+                        {% if item.ticker != 'CASH' %}
+                        <a href="#" onclick="openTickerModal('{{ item.ticker }}'); return false;"
+                            class="ticker-link"><strong>{{ item.ticker }}</strong></a>
+                        {% else %}
+                        <strong>{{ item.ticker }}</strong>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.shares | int }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.avg_purchase_price) }}</td>
+                    <td class="text-right">{{ "%.2f"|format(item.current_price) }}</td>
+                    <td>{{ item.currency }}</td>
+                    <td class="text-right">€ {{ "%.2f"|format(item.net_value_eur) }}</td>
+                    <td
+                        class="text-right {% if item.profit_eur > 0 %}highlight-text{% elif item.profit_eur < 0 %}danger-text{% endif %}">
+                        € {{ "%.2f"|format(item.profit_eur) }} <br>
+                        <small>({{ "%.2f"|format(item.profit_pct) }}%)</small>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center empty-state">Geen posities gevonden in deze portefeuille.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid-layout mt-2">
+    <!-- Aandeel Transactie Form -->
+    <div class="card">
+        <h2>Aandeel Transactie</h2>
+        <form action="{{ url_for('add_transaction', id=portfolio.id) }}" method="POST" class="modern-form">
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Type</label>
+                    <select name="type" id="trans-type" required>
+                        <option value="BUY">Koop</option>
+                        <option value="SELL">Verkoop</option>
+                    </select>
+                </div>
+                <div class="form-group flex-1">
+                    <label>Ticker</label>
+                    <input type="text" name="ticker" id="ticker-input" placeholder="Bijv. AAPL" required>
+                    <select name="ticker" id="ticker-select" style="display: none;" disabled>
+                        <option value="">Selecteer aandeel...</option>
+                        {% for item in holdings %}
+                        <option value="{{ item.ticker }}" data-currency="{{ item.currency }}">{{ item.ticker }} ({{
+                            item.shares | int }} stuks)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Aantal</label>
+                    <input type="number" step="1" name="shares" required>
+                </div>
+                <div class="form-group flex-1">
+                    <label>Prijs per aandeel</label>
+                    <input type="number" step="any" name="price_per_share" id="price-input" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>Munteenheid</label>
+                    <input type="text" name="currency" id="currency-input" value="EUR" required>
+                </div>
+                <div class="form-group flex-1">
+                    <label>Brokerkost (EUR)</label>
+                    <input type="number" step="any" name="broker_cost_euro" value="0.00" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Transactie Toevoegen</button>
+        </form>
+    </div>
+
+    <!-- Cash Transactie Form -->
+    <div class="card">
+        <h2>Cash Transactie</h2>
+        <form action="{{ url_for('add_transaction', id=portfolio.id) }}" method="POST" class="modern-form">
+            <div class="form-group">
+                <label>Actie</label>
+                <select name="type" required>
+                    <option value="CASH_IN">Cash Storten (+)</option>
+                    <option value="CASH_OUT">Cash Opnemen (-)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Bedrag (EUR)</label>
+                <input type="number" step="any" name="shares" required>
+            </div>
+            <button type="submit" class="btn btn-secondary w-100 mt-auto">Cash Verwerken</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openTickerModal(ticker) {
+        const modal = document.getElementById("tickerModal");
+        if (!modal) return;
+
+        modal.style.display = "block";
+        document.getElementById('modal-title').innerText = "Laden van " + ticker + "...";
+        document.getElementById('modal-spinner').style.display = "block";
+        document.getElementById('modal-data').style.display = "none";
+
+        fetch('/api/ticker_info/' + ticker)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modal-spinner').style.display = "none";
+                if (data.error) {
+                    document.getElementById('modal-title').innerText = "Fout bij laden";
+                    return;
+                }
+
+                document.getElementById('modal-data').style.display = "block";
+                document.getElementById('modal-title').innerText = data.name + " (" + data.ticker + ")";
+                document.getElementById('modal-summary').innerText = data.summary;
+                document.getElementById('modal-sector').innerText = data.sector;
+                document.getElementById('modal-industry').innerText = data.industry;
+                document.getElementById('modal-country').innerText = data.country;
+                document.getElementById('modal-currency').innerText = data.currency;
+            })
+            .catch(err => {
+                document.getElementById('modal-spinner').style.display = "none";
+                document.getElementById('modal-title').innerText = "Error loading data.";
+            });
+    }
+
+    // Transaction Form Logic
+    const typeSelect = document.getElementById('trans-type');
+    const tickerInput = document.getElementById('ticker-input');
+    const tickerSelect = document.getElementById('ticker-select');
+    const currencyInput = document.getElementById('currency-input');
+
+    function handleTypeChange() {
+        if (typeSelect.value === 'SELL') {
+            tickerInput.style.display = 'none';
+            tickerInput.disabled = true;
+            tickerInput.required = false;
+
+            tickerSelect.style.display = 'block';
+            tickerSelect.disabled = false;
+            tickerSelect.required = true;
+
+            // Auto-fill currency if something is already selected
+            if (tickerSelect.value) {
+                const opt = tickerSelect.options[tickerSelect.selectedIndex];
+                if (opt && opt.getAttribute('data-currency')) {
+                    currencyInput.value = opt.getAttribute('data-currency');
+                }
+            }
+        } else {
+            tickerInput.style.display = 'block';
+            tickerInput.disabled = false;
+            tickerInput.required = true;
+
+            tickerSelect.style.display = 'none';
+            tickerSelect.disabled = true;
+            tickerSelect.required = false;
+        }
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', handleTypeChange);
+    }
+
+    if (tickerSelect) {
+        tickerSelect.addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            if (opt && opt.value) {
+                currencyInput.value = opt.getAttribute('data-currency');
+            }
+        });
+    }
+
+    if (tickerInput) {
+        let tickerTimeout;
+        tickerInput.addEventListener('input', function () {
+            clearTimeout(tickerTimeout);
+            const ticker = this.value.trim().toUpperCase();
+            if (ticker.length > 0) {
+                tickerTimeout = setTimeout(() => {
+                    currencyInput.value = 'Laden...';
+                    fetch('/api/ticker_info/' + ticker)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.error) {
+                                if (data.currency) {
+                                    currencyInput.value = data.currency;
+                                }
+                                if (data.price) {
+                                    const priceInput = document.getElementById('price-input');
+                                    // Vul de prijs in (we controleren of het momenteel aan de BUY zijde is)
+                                    if (priceInput && document.getElementById('trans-type').value === 'BUY') {
+                                        // Vul de waarde in afgerond op 2 decimalen, of laat staan indien er al iet in staat
+                                        if (!priceInput.value) {
+                                            priceInput.value = parseFloat(data.price).toFixed(2);
+                                        }
+                                    }
+                                }
+                            } else {
+                                currencyInput.value = 'EUR'; // Fallback
+                            }
+                        })
+                        .catch(() => {
+                            currencyInput.value = 'EUR'; // Fallback
+                        });
+                }, 600); // 600ms debounce
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Historiek: {{ portfolio.name }}</h1>
+    <a href="{{ url_for('portfolio_detail', id=portfolio.id) }}" class="back-link">&larr; Terug naar portefeuille</a>
+</div>
+
+<div class="card table-responsive mt-2">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Type</th>
+                <th>Ticker</th>
+                <th class="text-right">Aantal/Bedrag</th>
+                <th class="text-right">Prijs/st</th>
+                <th>Munt</th>
+                <th class="text-right">Brokerkost (EUR)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.date }}</td>
+                <td>
+                    <span class="badge badge-{{ t.type|lower }}">{{ t.type }}</span>
+                </td>
+                <td><strong>{{ t.ticker }}</strong></td>
+                <td class="text-right">
+                    {% if t.ticker != 'CASH' %}
+                    {{ t.shares | int }}
+                    {% else %}
+                    {{ "%.2f"|format(t.shares) }}
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ "%.2f"|format(t.price_per_share) if t.price_per_share else '-' }}</td>
+                <td>{{ t.currency }}</td>
+                <td class="text-right">€ {{ "%.2f"|format(t.broker_cost_euro) if t.broker_cost_euro else '0.00' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center empty-state">Geen transacties gevonden.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

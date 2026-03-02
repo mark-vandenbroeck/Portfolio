@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Welkom bij Portefeuille Beheer</h1>
+    <p>Beheer al uw investeringen, cash en bekijk actuele waardes.</p>
+</div>
+
+<div class="grid-layout">
+    <div class="card">
+        <h2>Mijn Portefeuilles</h2>
+        {% if portfolios %}
+        <ul class="item-list">
+            {% for p in portfolios %}
+            <li>
+                <a href="{{ url_for('portfolio_detail', id=p.id) }}" class="item-link">
+                    <span class="item-name">{{ p.name }}</span>
+                    <span class="item-action">Bekijk &rarr;</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">U heeft nog geen portefeuilles aangemaakt.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Nieuwe Portefeuille Aanmaken</h2>
+        <form action="{{ url_for('add_portfolio') }}" method="POST" class="modern-form">
+            <div class="form-group">
+                <label for="name">Naam van de portefeuille</label>
+                <input type="text" id="name" name="name" placeholder="Bijv. Technologie Aandelen" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Aanmaken</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
