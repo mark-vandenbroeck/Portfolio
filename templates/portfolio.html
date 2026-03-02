@@ -23,6 +23,15 @@
 </div>
 
 <div class="card mt-2">
+    <h2>Portefeuille Verloop (1 Jaar)</h2>
+    <div style="width: 100%; height: 300px; position: relative;">
+        <!-- Spinner while loading history -->
+        <div class="spinner" id="portfolio-chart-spinner" style="display: block; margin: 100px auto;"></div>
+        <canvas id="portfolioChart" style="display: none;"></canvas>
+    </div>
+</div>
+
+<div class="card mt-2">
     <div class="flex-between">
         <h2>Huidige Posities</h2>
     </div>
@@ -253,5 +262,95 @@
             }
         });
     }
+
+    // Portfolio History Chart Logic
+    document.addEventListener("DOMContentLoaded", function () {
+        const pCanvas = document.getElementById('portfolioChart');
+        const pSpinner = document.getElementById('portfolio-chart-spinner');
+
+        if (pCanvas) {
+            fetch('{{ url_for("api_portfolio_history_chart", id=portfolio.id) }}')
+                .then(res => res.json())
+                .then(data => {
+                    pSpinner.style.display = 'none';
+                    if (!data.error && data.dates && data.dates.length > 0) {
+                        pCanvas.style.display = 'block';
+                        const ctx = pCanvas.getContext('2d');
+
+                        // We use a beautiful green/teal color for the portfolio growth
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.dates,
+                                datasets: [{
+                                    label: 'Totale Waarde (EUR)',
+                                    data: data.values,
+                                    borderColor: '#10b981', // Emerald green
+                                    backgroundColor: gradient,
+                                    borderWidth: 2,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 4,
+                                    fill: true,
+                                    tension: 0.1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index',
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function (context) {
+                                                if (context.parsed.y !== null) {
+                                                    return '€ ' + context.parsed.y.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                }
+                                                return '';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        display: true,
+                                        ticks: {
+                                            maxTicksLimit: 8,
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        },
+                                        grid: { display: false }
+                                    },
+                                    y: {
+                                        ticks: {
+                                            callback: function (value) {
+                                                return '€ ' + value.toLocaleString('nl-NL');
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        // Geen data aanwezig of onvoldoende historie
+                        const container = pCanvas.parentElement;
+                        container.innerHTML = '<p class="text-center empty-state" style="padding-top: 100px;">Nog onvoldoende data om een grafiek te tonen.</p>';
+                    }
+                })
+                .catch(err => {
+                    pSpinner.style.display = 'none';
+                    console.error("Error loading history chart:", err);
+                    const container = pCanvas.parentElement;
+                    container.innerHTML = '<p class="text-center empty-state" style="padding-top: 100px;">Kon grafiek niet laden.</p>';
+                });
+        }
+    });
 </script>
 {% endblock %}

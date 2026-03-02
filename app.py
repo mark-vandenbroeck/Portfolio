@@ -313,5 +313,201 @@ def api_ticker_info(ticker):
     except Exception as e:
         return {'error': str(e)}, 500
 
+@app.route('/api/portfolio/<int:id>/history_chart')
+def api_portfolio_history_chart(id):
+    conn = get_db_connection()
+    portfolio = conn.execute('SELECT * FROM portfolios WHERE id = ?', (id,)).fetchone()
+    if not portfolio:
+        conn.close()
+        return {'error': 'Portfolio not found'}, 404
+        
+    transactions = [dict(row) for row in conn.execute('SELECT * FROM transactions WHERE portfolio_id = ? ORDER BY date ASC', (id,)).fetchall()]
+    conn.close()
+    
+    if not transactions:
+        return {'dates': [], 'values': []}
+
+    # Extract all unique tickers (excluding CASH)
+    tickers = list(set([t['ticker'] for t in transactions if t['ticker'] != 'CASH']))
+    
+    # Sync splits first
+    from finance import sync_stock_splits, get_exchange_rate
+    for tk in tickers:
+        sync_stock_splits(tk)
+        
+    # Get all splits for these tickers
+    events = []
+    events.extend(transactions)
+    if tickers:
+        conn = get_db_connection()
+        placeholders = ','.join('?' for _ in tickers)
+        splits = conn.execute(f'SELECT * FROM stock_splits WHERE ticker IN ({placeholders})', tickers).fetchall()
+        for s in splits:
+            events.append({
+                'type': 'SPLIT',
+                'ticker': s['ticker'],
+                'date': s['date'] + ' 00:00:00',
+                'ratio': s['ratio'],
+                'shares': 0
+            })
+        conn.close()
+        
+    # Sort chronologically
+    events.sort(key=lambda x: str(x['date']))
+    
+    # Download 1 year of data for all tickers to map historical prices
+    import yfinance as yf
+    import datetime
+    
+    hist_prices = {}
+    ticker_currencies = {}
+    
+    if tickers:
+        try:
+            # We can download data in bulk via yf.download
+            # Returns a multi-index dataframe if multiple tickers, or single index if 1 ticker.
+            data = yf.download(tickers, period="1y", group_by="ticker", auto_adjust=False, actions=False, threads=True)
+            
+            for tk in tickers:
+                # Store currency for the ticker using fast_info
+                try:
+                    tk_info = yf.Ticker(tk).fast_info
+                    ticker_currencies[tk] = tk_info.get('currency', 'EUR')
+                except:
+                    ticker_currencies[tk] = 'EUR'
+                    
+                hist_prices[tk] = {}
+                if len(tickers) == 1:
+                    tk_data = data
+                else:
+                    try:
+                        tk_data = data[tk]
+                    except KeyError:
+                        continue # Data missing
+                
+                if not tk_data.empty:
+                    # Map date str to close price
+                    for date_ts, row in tk_data.iterrows():
+                        date_str = date_ts.strftime('%Y-%m-%d')
+                        if 'Close' in tk_data.columns:
+                            close_val = row['Close']
+                            if not import_pandas_check_isnan(close_val):
+                                hist_prices[tk][date_str] = float(close_val)
+        except Exception as e:
+            print(f"Error fetching bulk history: {e}")
+
+    # Generate a timeline of dates for the last year (or from first transaction if later)
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=365)
+    
+    if events:
+        first_event_date = datetime.datetime.strptime(events[0]['date'].split(' ')[0], '%Y-%m-%d').date()
+        if first_event_date > start_date:
+            start_date = first_event_date
+            
+    # Calculate exchange rates cache (use latest available as an approximation to avoid fetching 365 fx points)
+    fx_cache = {}
+    for tk, cur in ticker_currencies.items():
+        if cur not in fx_cache:
+            fx_cache[cur] = get_exchange_rate(cur)
+            
+    # Iterate through each day to build the timeline
+    chart_dates = []
+    chart_values = []
+    
+    current_holdings = {}
+    current_cash_eur = 0.0
+    event_idx = 0
+    total_events = len(events)
+    
+    current_date = start_date
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        
+        # Process any events that happened on or before this day
+        while event_idx < total_events:
+            ev = events[event_idx]
+            ev_date_str = ev['date'].split(' ')[0]
+            if ev_date_str > date_str:
+                break # Event happens in the future relative to our current loop date
+                
+            ticker = ev['ticker']
+            if ev['type'] == 'CASH_IN':
+                current_cash_eur += ev['shares']
+            elif ev['type'] == 'CASH_OUT':
+                current_cash_eur -= ev['shares']
+            elif ev['type'] == 'BUY':
+                if ticker not in current_holdings:
+                    current_holdings[ticker] = 0
+                current_holdings[ticker] += ev['shares']
+                
+                # Deduct cost from cash
+                cost_curr = ev['shares'] * ev.get('price_per_share', 0.0)
+                e_rate = get_exchange_rate(ev.get('currency', 'EUR')) # Historical rate isn't perfectly simulated here, we use live
+                cost_eur = cost_curr * e_rate + ev.get('broker_cost_euro', 0.0)
+                current_cash_eur -= cost_eur
+            elif ev['type'] == 'SELL':
+                if ticker in current_holdings:
+                    # Add revenue to cash
+                    revenue_curr = ev['shares'] * ev.get('price_per_share', 0.0)
+                    e_rate = get_exchange_rate(ev.get('currency', 'EUR'))
+                    revenue_eur = revenue_curr * e_rate - ev.get('broker_cost_euro', 0.0)
+                    current_cash_eur += revenue_eur
+                    
+                    current_holdings[ticker] -= ev['shares']
+            elif ev['type'] == 'SPLIT':
+                if ticker in current_holdings:
+                    current_holdings[ticker] *= ev['ratio']
+                    
+            event_idx += 1
+            
+        # Calculate end-of-day portfolio value
+        eod_value_eur = current_cash_eur
+        
+        for tk, shares in current_holdings.items():
+            if shares > 0:
+                # Find the closest historic price for this date
+                price = None
+                if tk in hist_prices:
+                    # Try to get exact date, if weekend/holiday find previous valid date within 7 days
+                    check_date = current_date
+                    for _ in range(7):
+                        check_str = check_date.strftime('%Y-%m-%d')
+                        if check_str in hist_prices[tk]:
+                            price = hist_prices[tk][check_str]
+                            break
+                        check_date -= datetime.timedelta(days=1)
+                
+                if price is not None:
+                    # Convert to EUR using current exchange rate approximation
+                    cur = ticker_currencies.get(tk, 'EUR')
+                    fx = fx_cache.get(cur, 1.0)
+                    eod_value_eur += (price * shares) * fx
+                else:
+                    # If we really can't find a price, we fall back to the buying price or 0 (rough approx)
+                    pass
+        
+        # Only add to chart if we have data after the first deposit/transaction (prevent useless flat 0s at the start)
+        if eod_value_eur != 0.0 or chart_values:
+            chart_dates.append(date_str)
+            chart_values.append(round(eod_value_eur, 2))
+            
+        current_date += datetime.timedelta(days=1)
+        
+    return {
+        'dates': chart_dates,
+        'values': chart_values
+    }
+
+def import_pandas_check_isnan(val):
+    import math
+    try:
+        if math.isnan(val):
+            return True
+    except:
+        pass
+    import pandas as pd
+    return pd.isna(val)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
