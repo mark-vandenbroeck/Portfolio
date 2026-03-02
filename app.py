@@ -87,9 +87,22 @@ def portfolio_detail(id):
                 holdings[ticker] = 0
                 invested_curr[ticker] = 0.0
             holdings[ticker] += e['shares']
-            invested_curr[ticker] += e['shares'] * e.get('price_per_share', 0.0)
+            
+            # Deduct the total cost of the purchase from cash balance
+            cost_curr = e['shares'] * e.get('price_per_share', 0.0)
+            exch_rate = get_exchange_rate(e.get('currency', 'EUR'))
+            cost_eur = cost_curr * exch_rate + e.get('broker_cost_euro', 0.0)
+            cash_eur -= cost_eur
+            
+            invested_curr[ticker] += cost_curr
         elif e['type'] == 'SELL':
             if ticker in holdings and holdings[ticker] > 0:
+                # Add the revenue of the sale to cash balance
+                revenue_curr = e['shares'] * e.get('price_per_share', 0.0)
+                exch_rate = get_exchange_rate(e.get('currency', 'EUR'))
+                revenue_eur = revenue_curr * exch_rate - e.get('broker_cost_euro', 0.0)
+                cash_eur += revenue_eur
+                
                 # Verminder de geïnvesteerde waarde proportioneel met de verkochte fractie
                 ratio = e['shares'] / holdings[ticker]
                 invested_curr[ticker] -= invested_curr[ticker] * ratio
