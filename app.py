@@ -82,6 +82,8 @@ def portfolio_detail(id):
             cash_eur += e['shares']
         elif e['type'] == 'CASH_OUT':
             cash_eur -= e['shares']
+        elif e['type'] == 'DIVIDEND':
+            cash_eur += e['shares']
         elif e['type'] == 'BUY':
             if ticker not in holdings:
                 holdings[ticker] = 0
@@ -154,7 +156,8 @@ def portfolio_detail(id):
             'gross_value_curr': gross_value_curr,
             'net_value_eur': net_value_eur,
             'profit_eur': profit_eur,
-            'profit_pct': profit_pct
+            'profit_pct': profit_pct,
+            'dividend_yield': info.get('dividend_yield', 'N/B')
         })
         total_portfolio_value_eur += net_value_eur
         
@@ -182,8 +185,10 @@ def add_transaction(id):
     broker_cost_euro = float(request.form.get('broker_cost_euro', 0))
     currency = request.form.get('currency', 'EUR').upper()
     
-    if trans_type in ['CASH_IN', 'CASH_OUT']:
-        ticker = 'CASH'
+    # Defaults for CASH transactions
+    if trans_type in ['CASH_IN', 'CASH_OUT', 'DIVIDEND']:
+        if trans_type in ['CASH_IN', 'CASH_OUT']:
+            ticker = 'CASH'
         currency = 'EUR'
         price_per_share = 1.0
         
@@ -196,7 +201,7 @@ def add_transaction(id):
         current_cash_eur = 0.0
         for t in transactions:
             e = dict(t)
-            if e['type'] == 'CASH_IN':
+            if e['type'] in ['CASH_IN', 'DIVIDEND']:
                 current_cash_eur += e['shares']
             elif e['type'] == 'CASH_OUT':
                 current_cash_eur -= e['shares']
@@ -288,7 +293,7 @@ def api_ticker_info(ticker):
             'dayHigh': info.get('dayHigh', 'N/B'),
             'dayLow': info.get('dayLow', 'N/B'),
             'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', 'N/B'),
-            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', 'N/B'),
+            'dividendYield': round(float(info.get('dividendYield', 0)) * 100, 2) if info.get('dividendYield') else 'N/B',
             'website': info.get('website', '#')
         }
         
@@ -432,7 +437,7 @@ def api_portfolio_history_chart(id):
                 break # Event happens in the future relative to our current loop date
                 
             ticker = ev['ticker']
-            if ev['type'] == 'CASH_IN':
+            if ev['type'] in ['CASH_IN', 'DIVIDEND']:
                 current_cash_eur += ev['shares']
             elif ev['type'] == 'CASH_OUT':
                 current_cash_eur -= ev['shares']

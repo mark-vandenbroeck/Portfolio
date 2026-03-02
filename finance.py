@@ -22,14 +22,19 @@ def get_stock_info(ticker):
         currency = full_info.get('currency', 'EUR')
         price = info.get('last_price', full_info.get('currentPrice', 0.0))
         
+        # Extract Dividend Yield (comes as decimal, e.g. 0.05 for 5%)
+        raw_yield = full_info.get('dividendYield')
+        div_yield = float(raw_yield) * 100 if raw_yield is not None else 0.0
+        
         return {
             'price': float(price),
             'name': name,
-            'currency': currency
+            'currency': currency,
+            'dividend_yield': div_yield
         }
     except Exception as e:
         print(f"Error fetching data for {ticker}: {e}")
-        return {'price': 0.0, 'name': ticker, 'currency': 'EUR'}
+        return {'price': 0.0, 'name': ticker, 'currency': 'EUR', 'dividend_yield': 0.0}
 
 def get_exchange_rate(currency):
     """

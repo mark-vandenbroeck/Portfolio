@@ -62,16 +62,12 @@
                             <span class="modal-value highlight" id="modal-price"></span>
                         </div>
                         <div class="modal-item">
-                            <span class="modal-label">Dag (Hoog/Laag)</span>
-                            <span class="modal-value" id="modal-day-range"></span>
-                        </div>
-                        <div class="modal-item">
-                            <span class="modal-label">52W (Hoog/Laag)</span>
-                            <span class="modal-value" id="modal-52w-range"></span>
-                        </div>
-                        <div class="modal-item">
                             <span class="modal-label">Valuta</span>
                             <span class="modal-value" id="modal-currency"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Land</span>
+                            <span class="modal-value" id="modal-country"></span>
                         </div>
                         <div class="modal-item">
                             <span class="modal-label">Sector</span>
@@ -81,6 +77,16 @@
                             <span class="modal-label">Industrie</span>
                             <span class="modal-value" id="modal-industry"></span>
                         </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Website</span>
+                            <span class="modal-value"><a href="#" id="modal-website" target="_blank">Link</a></span>
+                        </div>
+                    </div>
+                    <div class="modal-metrics">
+                        <p><strong>Market Cap:</strong> <span id="modal-marketcap"></span></p>
+                        <p><strong>Div. Yield:</strong> <span id="modal-div-yield"></span>%</p>
+                        <p><strong>Dag Range:</strong> <span id="modal-day-range"></span></p>
+                        <p><strong>52W Range:</strong> <span id="modal-52w-range"></span></p>
                     </div>
                     <!-- Chart.js Canvas -->
                     <div style="margin-top: 1.5rem; width: 100%; height: 250px;">
@@ -104,6 +110,14 @@
             return num.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        function formatLargeNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) return 'N/B';
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            return num.toLocaleString('nl-NL');
+        }
+
         function openTickerModal(ticker) {
             const modal = document.getElementById("tickerModal");
             if (!modal) return;
@@ -125,7 +139,24 @@
                     document.getElementById('modal-data').style.display = "block";
                     document.getElementById('modal-title').innerText = data.name + " (" + data.ticker + ")";
 
-                    document.getElementById('modal-price').innerText = data.price ? formatNumberLocal(data.price) + " " + data.currency : "N/B";
+                    document.getElementById('modal-price').innerHTML = `€ ${parseFloat(data.price).toFixed(2)} <span style="font-size: 0.6em; color: var(--text-muted);">(${data.currency || 'EUR'})</span>`;
+
+                    document.getElementById('modal-currency').innerText = data.currency || 'N/B';
+                    document.getElementById('modal-country').textContent = data.country || 'N/B';
+                    document.getElementById('modal-sector').innerText = data.sector || 'N/B';
+                    document.getElementById('modal-industry').innerText = data.industry || 'N/B';
+
+                    const websiteLink = document.getElementById('modal-website');
+                    if (data.website) {
+                        websiteLink.href = data.website;
+                        websiteLink.textContent = 'Link';
+                        websiteLink.style.display = 'inline';
+                    } else {
+                        websiteLink.style.display = 'none';
+                    }
+
+                    document.getElementById('modal-marketcap').textContent = formatLargeNumber(data.marketCap) || 'N/B';
+                    document.getElementById('modal-div-yield').textContent = data.dividendYield !== 'N/B' ? data.dividendYield : '-';
 
                     let dayRange = (data.dayLow !== "N/B" && data.dayHigh !== "N/B")
                         ? formatNumberLocal(data.dayHigh) + " / " + formatNumberLocal(data.dayLow)

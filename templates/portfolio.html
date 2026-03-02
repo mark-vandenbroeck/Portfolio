@@ -47,6 +47,7 @@
                     <th>Munt</th>
                     <th class="text-right">Nettowaarde (EUR)</th>
                     <th class="text-right">Winst/Verlies</th>
+                    <th class="text-right">Div. Yield (%)</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,10 +72,17 @@
                         € {{ "%.2f"|format(item.profit_eur) }} <br>
                         <small>({{ "%.2f"|format(item.profit_pct) }}%)</small>
                     </td>
+                    <td class="text-right">
+                        {% if item.dividend_yield != 'N/B' and item.dividend_yield > 0 %}
+                        {{ "%.2f"|format(item.dividend_yield) }}%
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="text-center empty-state">Geen posities gevonden in deze portefeuille.</td>
+                    <td colspan="9" class="text-center empty-state">Geen posities gevonden in deze portefeuille.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -88,6 +96,7 @@
                         € {{ "%.2f"|format(total_holdings_profit_eur) }} <br>
                         <small>({{ "%.2f"|format(total_holdings_profit_pct) }}%)</small>
                     </td>
+                    <td></td>
                 </tr>
             </tfoot>
             {% endif %}
@@ -153,10 +162,11 @@
                 <select name="type" required>
                     <option value="CASH_IN">Cash Storten (+)</option>
                     <option value="CASH_OUT">Cash Opnemen (-)</option>
+                    <option value="DIVIDEND">Dividend Ontvangen (+)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Bedrag (EUR)</label>
+                <label>Bedrag in EUR <small>(Totaal netto ontvangen)</small></label>
                 <input type="number" step="any" name="shares" required>
             </div>
             <button type="submit" class="btn btn-secondary w-100 mt-auto">Cash Verwerken</button>
