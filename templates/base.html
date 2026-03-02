@@ -17,9 +17,18 @@
     <nav class="navbar">
         <div class="nav-container">
             <a href="{{ url_for('index') }}" class="logo">🚀 PortfolioBeheer</a>
-            <div class="nav-links">
-                <a href="{{ url_for('index') }}">Mijn Portefeuilles</a>
-                <a href="{{ url_for('exchange_rates') }}" style="margin-left: 1rem;">Wisselkoersen</a>
+            <div class="nav-links" style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Global Ticker Search -->
+                <form id="global-search-form" style="display: flex; gap: 0.5rem;" onsubmit="handleGlobalSearch(event)">
+                    <input type="text" id="global-search-input" placeholder="Zoek ticker (bijv. AAPL)"
+                        class="modern-input"
+                        style="padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid #ccc; font-size: 0.9rem; width: 200px;"
+                        required>
+                    <button type="submit" class="btn btn-primary"
+                        style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">Zoek</button>
+                </form>
+                <a href="{{ url_for('index') }}" style="margin-left: 1rem;">Mijn Portefeuilles</a>
+                <a href="{{ url_for('exchange_rates') }}">Wisselkoersen</a>
             </div>
         </div>
     </nav>
@@ -80,6 +89,130 @@
     </footer>
 
     <!-- Scripts for modals/dynamic ui if needed later -->
+    <script>
+        // Global Chart Instance for Modal
+        let tickerChartInstance = null;
+
+        function formatNumberLocal(num) {
+            return num.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function openTickerModal(ticker) {
+            const modal = document.getElementById("tickerModal");
+            if (!modal) return;
+
+            modal.style.display = "block";
+            document.getElementById('modal-title').innerText = "Laden van " + ticker + "...";
+            document.getElementById('modal-spinner').style.display = "block";
+            document.getElementById('modal-data').style.display = "none";
+
+            fetch('/api/ticker_info/' + ticker)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modal-spinner').style.display = "none";
+                    if (data.error) {
+                        document.getElementById('modal-title').innerText = "Fout bij laden";
+                        return;
+                    }
+
+                    document.getElementById('modal-data').style.display = "block";
+                    document.getElementById('modal-title').innerText = data.name + " (" + data.ticker + ")";
+                    document.getElementById('modal-summary').innerText = data.summary;
+                    document.getElementById('modal-sector').innerText = data.sector;
+                    document.getElementById('modal-industry').innerText = data.industry;
+                    document.getElementById('modal-country').innerText = data.country;
+                    document.getElementById('modal-currency').innerText = data.currency;
+
+                    // Render Chart if history is available
+                    const canvas = document.getElementById('tickerChart');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+
+                        // Vernietig vorige grafiek indien deze bestaat
+                        if (tickerChartInstance) {
+                            tickerChartInstance.destroy();
+                        }
+
+                        if (data.history && data.history.dates && data.history.prices) {
+                            canvas.style.display = 'block';
+                            tickerChartInstance = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: data.history.dates,
+                                    datasets: [{
+                                        label: 'Sluitingsprijs (' + data.currency + ')',
+                                        data: data.history.prices,
+                                        borderColor: '#4361ee', // Primary color from style.css
+                                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 0, // Verberg punten voor een strakkere lijn
+                                        pointHoverRadius: 4,
+                                        fill: true,
+                                        tension: 0.1 // Lichte curve
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {
+                                        intersect: false,
+                                        mode: 'index',
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: false // We verbergen de legende voor een schonere look
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    let label = context.dataset.label || '';
+                                                    if (label) {
+                                                        label += ': ';
+                                                    }
+                                                    if (context.parsed.y !== null) {
+                                                        label += formatNumberLocal(context.parsed.y) + ' ' + data.currency;
+                                                    }
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            display: false // Verberg x-as labels (datums) voor een schoner overzicht over 1 jaar, of laat ze deels zien
+                                        },
+                                        y: {
+                                            ticks: {
+                                                callback: function (value, index, ticks) {
+                                                    return formatNumberLocal(value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            // Verberg canvas als er geen historie data is
+                            canvas.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('modal-spinner').style.display = "none";
+                    document.getElementById('modal-title').innerText = "Fout bij laden van data.";
+                    console.error(err);
+                });
+        }
+
+        function handleGlobalSearch(event) {
+            event.preventDefault();
+            const input = document.getElementById('global-search-input');
+            const ticker = input.value.trim().toUpperCase();
+            if (ticker) {
+                openTickerModal(ticker);
+            }
+        }
+    </script>
 </body>
 
 </html>
