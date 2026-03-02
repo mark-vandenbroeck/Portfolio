@@ -213,6 +213,24 @@ def api_ticker_info(ticker):
             'price': price,
             'website': info.get('website', '#')
         }
+        
+        # Ophalen van historische data voor de grafiek (laatste 1 jaar)
+        try:
+            hist = stock.history(period="1y")
+            if not hist.empty:
+                # Converteer datums naar string formaat ('YYYY-MM-DD') en waarden naar floats
+                dates = hist.index.strftime('%Y-%m-%d').tolist()
+                prices = [round(float(p), 2) for p in hist['Close'].tolist()]
+                data['history'] = {
+                    'dates': dates,
+                    'prices': prices
+                }
+            else:
+                data['history'] = None
+        except Exception as e:
+            print(f"Error fetching history for {ticker}: {e}")
+            data['history'] = None
+            
         return data
     except Exception as e:
         return {'error': str(e)}, 500
