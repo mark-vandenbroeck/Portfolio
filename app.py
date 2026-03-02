@@ -118,6 +118,10 @@ def portfolio_detail(id):
     holdings_data = []
     total_portfolio_value_eur = cash_eur
     
+    total_holdings_net_value = 0.0
+    total_holdings_profit_eur = 0.0
+    total_holdings_invested = 0.0
+    
     for ticker in active_tickers:
         shares = holdings[ticker]
         info = get_stock_info(ticker)
@@ -153,12 +157,21 @@ def portfolio_detail(id):
             'profit_pct': profit_pct
         })
         total_portfolio_value_eur += net_value_eur
+        
+        total_holdings_net_value += net_value_eur
+        total_holdings_profit_eur += profit_eur
+        total_holdings_invested += (invested_eur + total_broker_cost)
+
+    total_holdings_profit_pct = (total_holdings_profit_eur / total_holdings_invested) * 100 if total_holdings_invested > 0 else 0.0
 
     return render_template('portfolio.html', 
                            portfolio=portfolio, 
                            holdings=holdings_data, 
                            cash_eur=cash_eur,
-                           total_value=total_portfolio_value_eur)
+                           total_value=total_portfolio_value_eur,
+                           total_holdings_net_value=total_holdings_net_value,
+                           total_holdings_profit_eur=total_holdings_profit_eur,
+                           total_holdings_profit_pct=total_holdings_profit_pct)
 
 @app.route('/portfolio/<int:id>/transaction', methods=('POST',))
 def add_transaction(id):

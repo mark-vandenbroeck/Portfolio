@@ -69,6 +69,19 @@
                 </tr>
                 {% endfor %}
             </tbody>
+            {% if holdings %}
+            <tfoot>
+                <tr style="font-weight: 600; background-color: rgba(0,0,0,0.03);">
+                    <td colspan="6" class="text-right">Totaal (Posities):</td>
+                    <td class="text-right">€ {{ "%.2f"|format(total_holdings_net_value) }}</td>
+                    <td
+                        class="text-right {% if total_holdings_profit_eur > 0 %}highlight-text{% elif total_holdings_profit_eur < 0 %}danger-text{% endif %}">
+                        € {{ "%.2f"|format(total_holdings_profit_eur) }} <br>
+                        <small>({{ "%.2f"|format(total_holdings_profit_pct) }}%)</small>
+                    </td>
+                </tr>
+            </tfoot>
+            {% endif %}
         </table>
     </div>
 </div>
