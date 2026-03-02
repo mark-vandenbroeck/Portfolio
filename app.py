@@ -187,6 +187,42 @@ def add_transaction(id):
         currency = 'EUR'
         price_per_share = 1.0
         
+    # Prevent negative cash balances
+    if trans_type in ['BUY', 'CASH_OUT']:
+        conn = get_db_connection()
+        transactions = conn.execute('SELECT * FROM transactions WHERE portfolio_id = ? ORDER BY date ASC', (id,)).fetchall()
+        conn.close()
+        
+        current_cash_eur = 0.0
+        for t in transactions:
+            e = dict(t)
+            if e['type'] == 'CASH_IN':
+                current_cash_eur += e['shares']
+            elif e['type'] == 'CASH_OUT':
+                current_cash_eur -= e['shares']
+            elif e['type'] == 'BUY':
+                c_curr = e['shares'] * e.get('price_per_share', 0.0)
+                e_rate = get_exchange_rate(e.get('currency', 'EUR'))
+                c_eur = c_curr * e_rate + e.get('broker_cost_euro', 0.0)
+                current_cash_eur -= c_eur
+            elif e['type'] == 'SELL':
+                r_curr = e['shares'] * e.get('price_per_share', 0.0)
+                e_rate = get_exchange_rate(e.get('currency', 'EUR'))
+                r_eur = r_curr * e_rate - e.get('broker_cost_euro', 0.0)
+                current_cash_eur += r_eur
+                
+        # Calculate cost for the NEW transaction
+        if trans_type == 'CASH_OUT':
+            new_cost_eur = shares
+        else: # BUY
+            n_curr = shares * price_per_share
+            n_rate = get_exchange_rate(currency)
+            new_cost_eur = n_curr * n_rate + broker_cost_euro
+            
+        if current_cash_eur < new_cost_eur:
+            flash(f'Onvoldoende cash beschikbaar! (Beschikbaar: € {current_cash_eur:.2f}, Nodig: € {new_cost_eur:.2f})')
+            return redirect(url_for('portfolio_detail', id=id))
+        
     conn = get_db_connection()
     conn.execute('''
         INSERT INTO transactions (portfolio_id, ticker, type, shares, price_per_share, currency, broker_cost_euro)
