@@ -293,7 +293,8 @@ def api_ticker_info(ticker):
             'dayHigh': info.get('dayHigh', 'N/B'),
             'dayLow': info.get('dayLow', 'N/B'),
             'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', 'N/B'),
-            'dividendYield': round(float(info.get('dividendYield', 0)) * 100, 2) if info.get('dividendYield') else 'N/B',
+            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', 'N/B'),
+            'dividendYield': round(float(info.get('dividendYield', 0)), 2) if info.get('dividendYield') else 'N/B',
             'website': info.get('website', '#')
         }
         

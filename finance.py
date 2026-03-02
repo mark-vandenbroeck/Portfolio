@@ -22,9 +22,9 @@ def get_stock_info(ticker):
         currency = full_info.get('currency', 'EUR')
         price = info.get('last_price', full_info.get('currentPrice', 0.0))
         
-        # Extract Dividend Yield (comes as decimal, e.g. 0.05 for 5%)
+        # Extract Dividend Yield (already comes as a percentage, e.g. 5.04)
         raw_yield = full_info.get('dividendYield')
-        div_yield = float(raw_yield) * 100 if raw_yield is not None else 0.0
+        div_yield = float(raw_yield) if raw_yield is not None else 0.0
         
         return {
             'price': float(price),
