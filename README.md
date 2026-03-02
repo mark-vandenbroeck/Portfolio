@@ -7,10 +7,13 @@ Een gebruiksvriendelijke, lokaal gehoste webapplicatie gebouwd met **Flask** voo
 - **Meerdere portefeuilles beheren:** Maak verschillende portefeuilles aan (bijv. "Lange termijn", "Pensioen", "Opties") en verwijder ze indien nodig inclusief historie.
 - **Transactie-ondersteuning:** Registreer stortingen (`CASH_IN`), opnames (`CASH_OUT`), aankopen (`BUY`) en verkopen (`SELL`). 
 - **Cash Protectie:** Geavanceerde transactiecontroles voorkomen dat je cashbalans onder nul duikt bij aankopen of opnames.
-- **Historische Grafieken:** Ingebouwde integratie met `Chart.js` via een interactieve modal om 1-jaars koersgrafieken direct op te roepen.
+- **Transactie-Ondersteuning:** Registreer stortingen (`CASH_IN`), opnames (`CASH_OUT`), aankopen (`BUY`), verkopen (`SELL`) én uitgekeerde inkomsten (`DIVIDEND`).
+- **Historische Portfolio Grafiek:** Bekijk niet enkel individuele aandelenkoersen, maar volg visueel de groei van je *totale* portfolio waarde over de afgelopen 365 dagen in een prachtig ontworpen interactief dashboard.
+- **Individuele Ticker Grafieken:** Ingebouwde integratie met `Chart.js` via een interactieve modal om 1-jaars koersgrafieken en dividendrendement (Div Yield %) direct op te roepen voor eender welk aandeel.
+- **Sorteerbaar & Filterbaar:** Alle tabellen doorheen de hele applicatie kunnen met één klik oplopend of aflopend worden gesorteerd. Specifieke filtering (op datum, ticker of type) is ingebouwd in de Historiek-module.
 - **Globale Zoekfunctie:** Gebruik de snelle zoekbalk bovenaan elke pagina om direct de koers, dag-randen en 52-weken range van willekeurige tickers te bekijken zonder ze toe te voegen aan een portefeuille.
-- **Live koersdata:** Integreert met de `yfinance` bibliotheek om actuele aandelenkoersen en bedrijfsinformatie op te halen.
-- **Automatische wisselkoersen:** Alle investeringen (in USD, GBP, etc.) worden automatisch teruggerekend naar Euro (EUR) op basis van de meest recente wisselkoersen. Deze rates worden per dag lokaal gecached.
+- **Live Koersdata:** Integreert met de `yfinance` bibliotheek om actuele aandelenkoersen en bedrijfsinformatie op te halen.
+- **Automatische Wisselkoersen:** Alle investeringen (in USD, GBP, etc.) worden automatisch teruggerekend naar Euro (EUR) op basis van de meest recente wisselkoersen. Deze rates worden per dag lokaal gecached.
 - **Stock Splits:** De applicatie detecteert automatisch stock splits via Yahoo Finance en verwerkt deze historisch met terugwerkende kracht in jouw portfolio om de positieaantallen kloppend te houden.
 - **Winst- & Verliesberekening (P&L):** Berekening van de gemiddelde aankoopprijs, actuele posities en gecombineerde totaalwaardes van de portefeuille, inclusief rendement en valutaimpact.
 - **Brokerkosten:** Houd de gemaakte brokerkosten bij per transactie voor een nauwkeuriger beeld van het werkelijke rendement.
