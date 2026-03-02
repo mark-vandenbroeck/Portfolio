@@ -197,7 +197,15 @@
                                     },
                                     scales: {
                                         x: {
-                                            display: false // Verberg x-as labels (datums) voor een schoner overzicht over 1 jaar, of laat ze deels zien
+                                            display: true, // Nu actief
+                                            ticks: {
+                                                maxTicksLimit: 6, // Beperk het aantal labels om de as leesbaar te houden (bijv. ~ elke 2 maanden)
+                                                maxRotation: 45, // Roterend voor betere weergave
+                                                minRotation: 45
+                                            },
+                                            grid: {
+                                                display: false // Verberg verticale grid lines voor een schoner uiterlijk
+                                            }
                                         },
                                         y: {
                                             ticks: {
