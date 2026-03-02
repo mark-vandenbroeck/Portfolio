@@ -28,7 +28,8 @@
                         style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">Zoek</button>
                 </form>
                 <a href="{{ url_for('index') }}" style="margin-left: 1rem;">Mijn Portefeuilles</a>
-                <a href="{{ url_for('exchange_rates') }}">Wisselkoersen</a>
+                <a
+                    href="{{ url_for('exchange_rates', portfolio_id=portfolio.id) if portfolio else url_for('exchange_rates') }}">Wisselkoersen</a>
             </div>
         </div>
     </nav>

@@ -7,7 +7,12 @@
         <p>Overzicht van gecachte wisselkoersen (EUR basis).</p>
     </div>
     <div class="actions">
+        {% if portfolio_id %}
+        <a href="{{ url_for('portfolio_detail', id=portfolio_id) }}" class="btn btn-secondary">Terug naar
+            Portefeuille</a>
+        {% else %}
         <a href="{{ url_for('index') }}" class="btn btn-secondary">Terug naar Overzicht</a>
+        {% endif %}
     </div>
 </div>
 

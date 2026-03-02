@@ -262,11 +262,12 @@ def history(id):
 
 @app.route('/exchange_rates')
 def exchange_rates():
+    portfolio_id = request.args.get('portfolio_id')
     conn = get_db_connection()
     # Zorg dat we effectieve rates hebben.
     rates = conn.execute('SELECT * FROM exchange_rates ORDER BY date DESC, currency ASC').fetchall()
     conn.close()
-    return render_template('exchange_rates.html', rates=rates)
+    return render_template('exchange_rates.html', rates=rates, portfolio_id=portfolio_id)
 
 @app.route('/api/ticker_info/<ticker>')
 def api_ticker_info(ticker):
