@@ -208,21 +208,33 @@
         tickerInput.addEventListener('input', function () {
             clearTimeout(tickerTimeout);
             const ticker = this.value.trim().toUpperCase();
+
+            // Verwijder reeds automatisch ingevulde waardes zodat ze geüpdatet kunnen worden
+            currencyInput.value = 'Laden...';
+            const priceInput = document.getElementById('price-input');
+            if (priceInput && document.getElementById('trans-type').value === 'BUY') {
+                priceInput.value = '';
+            }
+
             if (ticker.length > 0) {
                 tickerTimeout = setTimeout(() => {
-                    currencyInput.value = 'Laden...';
+                    const currentRequestedTicker = ticker;
                     fetch('/api/ticker_info/' + ticker)
                         .then(res => res.json())
                         .then(data => {
+                            // Voorkom race-conditions waarbij een oudere "langzame" fetch een nieuwere "snelle" fetch overschrijft
+                            if (document.getElementById('ticker-input').value.trim().toUpperCase() !== currentRequestedTicker) {
+                                return;
+                            }
+
                             if (!data.error) {
                                 if (data.currency) {
                                     currencyInput.value = data.currency;
                                 }
                                 if (data.price) {
                                     const priceInput = document.getElementById('price-input');
-                                    // Vul de prijs in (we controleren of het momenteel aan de BUY zijde is)
+                                    // Vul de prijs in
                                     if (priceInput && document.getElementById('trans-type').value === 'BUY') {
-                                        // Vul de waarde in afgerond op 2 decimalen, of laat staan indien er al iet in staat
                                         if (!priceInput.value) {
                                             priceInput.value = parseFloat(data.price).toFixed(2);
                                         }
@@ -236,6 +248,8 @@
                             currencyInput.value = 'EUR'; // Fallback
                         });
                 }, 600); // 600ms debounce
+            } else {
+                currencyInput.value = 'EUR';
             }
         });
     }
