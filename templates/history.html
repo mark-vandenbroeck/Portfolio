@@ -6,6 +6,30 @@
     <a href="{{ url_for('portfolio_detail', id=portfolio.id) }}" class="back-link">&larr; Terug naar portefeuille</a>
 </div>
 
+<div class="card mt-2" style="padding-bottom: 0.5rem;">
+    <div class="modern-form flex-between" style="gap: 1rem; flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0; min-width: 200px; flex: 1;">
+            <label for="filter-date">Date (YYYY-MM-DD)</label>
+            <input type="text" id="filter-date" class="modern-input" placeholder="Zoek op datum...">
+        </div>
+        <div class="form-group" style="margin-bottom: 0; min-width: 200px; flex: 1;">
+            <label for="filter-type">Transactie Type</label>
+            <select id="filter-type" class="modern-input">
+                <option value="">Alle types</option>
+                <option value="BUY">BUY</option>
+                <option value="SELL">SELL</option>
+                <option value="CASH_IN">CASH_IN</option>
+                <option value="CASH_OUT">CASH_OUT</option>
+                <option value="DIVIDEND">DIVIDEND</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0; min-width: 200px; flex: 1;">
+            <label for="filter-ticker">Ticker / Munt</label>
+            <input type="text" id="filter-ticker" class="modern-input" placeholder="Zoek op ticker...">
+        </div>
+    </div>
+</div>
+
 <div class="card table-responsive mt-2">
     <table class="modern-table">
         <thead>
@@ -46,4 +70,60 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterDate = document.getElementById('filter-date');
+        const filterType = document.getElementById('filter-type');
+        const filterTicker = document.getElementById('filter-ticker');
+        const tableBody = document.querySelector('.modern-table tbody');
+        const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+        function applyFilters() {
+            const dateVal = filterDate.value.toLowerCase().trim();
+            const typeVal = filterType.value.toLowerCase().trim();
+            const tickerVal = filterTicker.value.toLowerCase().trim();
+
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                if (row.querySelector('.empty-state')) return;
+
+                const rowDate = row.children[0].textContent.toLowerCase();
+                const rowType = row.children[1].textContent.toLowerCase();
+                const rowTicker = row.children[2].textContent.toLowerCase();
+                const rowMunt = row.children[5].textContent.toLowerCase(); // Fallback to currency column for cash
+
+                const matchDate = rowDate.includes(dateVal);
+                const matchType = typeVal === '' || rowType.includes(typeVal);
+                const matchTicker = rowTicker.includes(tickerVal) || rowMunt.includes(tickerVal);
+
+                if (matchDate && matchType && matchTicker) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Check empty state
+            let emptyRow = tableBody.querySelector('.empty-state-filter');
+            if (visibleCount === 0 && rows.length > 0 && !rows[0].querySelector('.empty-state-filter')) {
+                if (!emptyRow) {
+                    emptyRow = document.createElement('tr');
+                    emptyRow.className = 'empty-state-filter';
+                    emptyRow.innerHTML = '<td colspan="7" class="text-center empty-state">Geen transacties matchen je filters.</td>';
+                    tableBody.appendChild(emptyRow);
+                }
+                emptyRow.style.display = '';
+            } else if (emptyRow) {
+                emptyRow.style.display = 'none';
+            }
+        }
+
+        filterDate.addEventListener('input', applyFilters);
+        filterType.addEventListener('change', applyFilters);
+        filterTicker.addEventListener('input', applyFilters);
+    });
+</script>
 {% endblock %}
