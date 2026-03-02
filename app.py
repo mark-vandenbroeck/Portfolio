@@ -233,10 +233,13 @@ def api_ticker_info(ticker):
             'sector': info.get('sector', 'N/B'),
             'industry': info.get('industry', 'N/B'),
             'country': info.get('country', 'N/B'),
-            'summary': info.get('longBusinessSummary', 'Geen samenvatting beschikbaar.'),
             'marketCap': info.get('marketCap', 'N/B'),
             'currency': info.get('currency', 'EUR'),
             'price': price,
+            'dayHigh': info.get('dayHigh', 'N/B'),
+            'dayLow': info.get('dayLow', 'N/B'),
+            'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', 'N/B'),
+            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', 'N/B'),
             'website': info.get('website', '#')
         }
         

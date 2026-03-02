@@ -56,8 +56,23 @@
                 <h2 id="modal-title">Laden...</h2>
                 <div class="spinner" id="modal-spinner"></div>
                 <div id="modal-data" style="display: none;">
-                    <p class="modal-summary" id="modal-summary"></p>
                     <div class="modal-grid">
+                        <div class="modal-item">
+                            <span class="modal-label">Huidige Koers</span>
+                            <span class="modal-value highlight" id="modal-price"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Dag (Hoog/Laag)</span>
+                            <span class="modal-value" id="modal-day-range"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">52W (Hoog/Laag)</span>
+                            <span class="modal-value" id="modal-52w-range"></span>
+                        </div>
+                        <div class="modal-item">
+                            <span class="modal-label">Valuta</span>
+                            <span class="modal-value" id="modal-currency"></span>
+                        </div>
                         <div class="modal-item">
                             <span class="modal-label">Sector</span>
                             <span class="modal-value" id="modal-sector"></span>
@@ -65,14 +80,6 @@
                         <div class="modal-item">
                             <span class="modal-label">Industrie</span>
                             <span class="modal-value" id="modal-industry"></span>
-                        </div>
-                        <div class="modal-item">
-                            <span class="modal-label">Land</span>
-                            <span class="modal-value" id="modal-country"></span>
-                        </div>
-                        <div class="modal-item">
-                            <span class="modal-label">Valuta</span>
-                            <span class="modal-value" id="modal-currency"></span>
                         </div>
                     </div>
                     <!-- Chart.js Canvas -->
@@ -117,11 +124,22 @@
 
                     document.getElementById('modal-data').style.display = "block";
                     document.getElementById('modal-title').innerText = data.name + " (" + data.ticker + ")";
-                    document.getElementById('modal-summary').innerText = data.summary;
+
+                    document.getElementById('modal-price').innerText = data.price ? formatNumberLocal(data.price) + " " + data.currency : "N/B";
+
+                    let dayRange = (data.dayLow !== "N/B" && data.dayHigh !== "N/B")
+                        ? formatNumberLocal(data.dayHigh) + " / " + formatNumberLocal(data.dayLow)
+                        : "N/B";
+                    document.getElementById('modal-day-range').innerText = dayRange;
+
+                    let w52Range = (data.fiftyTwoWeekLow !== "N/B" && data.fiftyTwoWeekHigh !== "N/B")
+                        ? formatNumberLocal(data.fiftyTwoWeekHigh) + " / " + formatNumberLocal(data.fiftyTwoWeekLow)
+                        : "N/B";
+                    document.getElementById('modal-52w-range').innerText = w52Range;
+
+                    document.getElementById('modal-currency').innerText = data.currency;
                     document.getElementById('modal-sector').innerText = data.sector;
                     document.getElementById('modal-industry').innerText = data.industry;
-                    document.getElementById('modal-country').innerText = data.country;
-                    document.getElementById('modal-currency').innerText = data.currency;
 
                     // Render Chart if history is available
                     const canvas = document.getElementById('tickerChart');
