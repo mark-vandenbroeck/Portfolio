@@ -13,10 +13,19 @@
         <ul class="item-list">
             {% for p in portfolios %}
             <li>
-                <a href="{{ url_for('portfolio_detail', id=p.id) }}" class="item-link">
-                    <span class="item-name">{{ p.name }}</span>
-                    <span class="item-action">Bekijk &rarr;</span>
-                </a>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <a href="{{ url_for('portfolio_detail', id=p.id) }}" class="item-link" style="flex: 1;">
+                        <span class="item-name">{{ p.name }}</span>
+                        <span class="item-action">Bekijk &rarr;</span>
+                    </a>
+                    <form action="{{ url_for('delete_portfolio', id=p.id) }}" method="POST"
+                        onsubmit="return confirm('Weet je zeker dat je de portefeuille \'{{ p.name }}\' inclusief alle transacties wilt verwijderen? Dit kan niet ongedaan worden gemaakt.');"
+                        style="margin-left: 1rem;">
+                        <button type="submit" class="danger-text"
+                            style="background: none; border: none; cursor: pointer; font-size: 0.9rem; padding: 0.5rem;"
+                            title="Verwijder portefeuille">Verwijder</button>
+                    </form>
+                </div>
             </li>
             {% endfor %}
         </ul>

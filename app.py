@@ -198,6 +198,19 @@ def add_transaction(id):
     flash('Transactie succesvol toegevoegd.')
     return redirect(url_for('portfolio_detail', id=id))
 
+@app.route('/portfolio/<int:id>/delete', methods=('POST',))
+def delete_portfolio(id):
+    conn = get_db_connection()
+    # Verwijder eerst de bijbehorende transacties om integriteit te behouden
+    conn.execute('DELETE FROM transactions WHERE portfolio_id = ?', (id,))
+    # Verwijder de portefeuille
+    conn.execute('DELETE FROM portfolios WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Portefeuille succesvol verwijderd.')
+    return redirect(url_for('index'))
+
 @app.route('/portfolio/<int:id>/history')
 def history(id):
     conn = get_db_connection()
