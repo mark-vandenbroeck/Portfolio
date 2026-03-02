@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="header-section">
-    <h1>Historische Wisselkoersen</h1>
-    <p>Overzicht van gecachte wisselkoersen (EUR basis).</p>
+<div class="header-section flex-between">
+    <div>
+        <h1>Historische Wisselkoersen</h1>
+        <p>Overzicht van gecachte wisselkoersen (EUR basis).</p>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Terug naar Overzicht</a>
+    </div>
 </div>
 
 <div class="card table-responsive mt-2">
