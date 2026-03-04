@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = 'portfolio.db'
+DB_PATH = os.environ.get('DB_PATH', 'portfolio.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)

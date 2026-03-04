@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/portfolio.db
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    restart: always

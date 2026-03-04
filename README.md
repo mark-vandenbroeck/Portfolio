@@ -35,10 +35,27 @@ Een gebruiksvriendelijke, lokaal gehoste webapplicatie gebouwd met **Flask** voo
 
 ## ⚙️ Installatie & Gebruik
 
-### Vereisten
-Zorg ervoor dat **Python 3.x** op je machine geïnstalleerd is.
+### Optie 1: Gebruik via Docker (Aanbevolen)
 
-### 1. Repository lokaal voorbereiden
+Dankzij Docker kan je de applicatie direct opstarten zonder lokale Python afhankelijkheden te installeren. De database wordt veilig opgeslagen in de map `data/`.
+
+Zorg ervoor dat Docker en Docker Compose zijn geïnstalleerd.
+
+```bash
+# Start de container op de achtergrond
+docker-compose up -d
+```
+
+De applicatie is nu bereikbaar via **poort 5002**:
+```
+http://127.0.0.1:5002
+```
+
+*(De container is zo ingesteld dat hij de host port 5002 gebruikt, aangezien 5000 vaak reeds in gebruik is op macOS).*
+
+### Optie 2: Lokale Python Installatie (Ontwikkeling)
+
+#### 1. Repository lokaal voorbereiden
 Open de terminal in je projectmap. We raden het gebruik van een _virtual environment_ aan om pakketversies geïsoleerd te houden:
 
 ```bash
@@ -46,21 +63,21 @@ python3 -m venv venv
 source venv/bin/activate  # (Op Windows gebruik je: venv\Scripts\activate)
 ```
 
-### 2. Afhankelijkheden installeren
-Je hebt een aantal Python library's nodig. Omdat er in de originele opzet geen requirements list is, dien je deze hoofdpakketten direct te installeren:
+#### 2. Afhankelijkheden installeren
+Installeer alle vereiste packages via het `requirements.txt` bestand:
 
 ```bash
-pip install flask yfinance
+pip install -r requirements.txt
 ```
 
-### 3. Applicatie opstarten
-Zodra de packages geïnstalleerd zijn kun je de app lokaal opstarten. De SQLite database zal de eerste keer automatisch geïnitialiseerd worden als het bestand `portfolio.db` ontbreekt.
+#### 3. Applicatie opstarten
+Zodra de packages geïnstalleerd zijn kun je de app lokaal opstarten. De SQLite database zal de eerste keer automatisch geïnitialiseerd worden in `portfolio.db`.
 
 ```bash
 python3 app.py
 ```
 
-### 4. Applicatie bezoeken in de webbrowser
+#### 4. Applicatie bezoeken in de webbrowser
 De server zal lokaal gestart worden en draait in development (debug) mode op poort 5000. Open je browser en ga naar:
 
 ```

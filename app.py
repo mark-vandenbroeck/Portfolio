@@ -7,7 +7,8 @@ app = Flask(__name__)
 app.secret_key = 'super_secret_portfolio_key'
 
 # Zorg ervoor dat de DB bestaat bij opstarten
-if not os.path.exists('portfolio.db'):
+DB_PATH = os.environ.get('DB_PATH', 'portfolio.db')
+if not os.path.exists(DB_PATH):
     init_db()
 
 @app.route('/')
